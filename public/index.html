@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Page Pulse — instant page audit</title>
+<meta name="description" content="Audit any URL: HTTP status, response time, title, meta description, headings, image alt coverage, and word count." />
+<style>
+  :root {
+    --bg: #0b1020;
+    --card: #141a2e;
+    --card-border: #232c49;
+    --text: #e8ecf6;
+    --muted: #9aa5c4;
+    --accent: #5b8cff;
+    --accent-2: #7c5bff;
+    --good: #34d399;
+    --warn: #fbbf24;
+    --bad: #f87171;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    background: radial-gradient(1200px 600px at 70% -10%, #1a2242 0%, var(--bg) 55%);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  main { flex: 1; width: 100%; max-width: 860px; margin: 0 auto; padding: 48px 20px 32px; }
+
+  .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .brand .dot {
+    width: 12px; height: 12px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    box-shadow: 0 0 12px var(--accent);
+  }
+  h1 { font-size: 1.9rem; letter-spacing: -0.5px; }
+  .tagline { color: var(--muted); margin: 8px 0 28px; }
+
+  form { display: flex; gap: 10px; flex-wrap: wrap; }
+  input[type="url"], input[type="text"] {
+    flex: 1; min-width: 240px;
+    padding: 14px 16px;
+    font-size: 1rem;
+    color: var(--text);
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input:focus { border-color: var(--accent); }
+  button {
+    padding: 14px 26px;
+    font-size: 1rem; font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    border: none; border-radius: 10px;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  button:hover { opacity: 0.9; }
+  button:active { transform: scale(0.98); }
+  button:disabled { opacity: 0.5; cursor: wait; }
+
+  .state { margin-top: 28px; }
+  .error {
+    background: rgba(248, 113, 113, 0.1);
+    border: 1px solid rgba(248, 113, 113, 0.4);
+    color: var(--bad);
+    padding: 14px 16px;
+    border-radius: 10px;
+  }
+  .loading { color: var(--muted); display: flex; align-items: center; gap: 10px; }
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid var(--card-border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .report-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap; margin-bottom: 16px;
+  }
+  .report-url { color: var(--muted); font-size: 0.9rem; word-break: break-all; }
+  .pill {
+    padding: 4px 12px; border-radius: 999px;
+    font-size: 0.85rem; font-weight: 600;
+  }
+  .pill.good { background: rgba(52, 211, 153, 0.15); color: var(--good); }
+  .pill.warn { background: rgba(251, 191, 36, 0.15); color: var(--warn); }
+  .pill.bad  { background: rgba(248, 113, 113, 0.15); color: var(--bad); }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 18px;
+  }
+  .card .label { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+  .card .value { font-size: 1.5rem; font-weight: 700; word-break: break-word; }
+  .card .value.small { font-size: 1rem; font-weight: 500; line-height: 1.5; }
+  .card .hint { margin-top: 6px; font-size: 0.82rem; }
+  .hint.good { color: var(--good); }
+  .hint.warn { color: var(--warn); }
+  .hint.bad  { color: var(--bad); }
+  .card.wide { grid-column: 1 / -1; }
+  .missing { color: var(--muted); font-style: italic; font-weight: 400; }
+
+  footer {
+    text-align: center;
+    padding: 20px;
+    color: var(--muted);
+    font-size: 0.85rem;
+    border-top: 1px solid var(--card-border);
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<main>
+  <div class="brand"><span class="dot"></span><h1>Page Pulse</h1></div>
+  <p class="tagline">Paste any URL and get an instant on-page health report.</p>
+
+  <form id="audit-form">
+    <input type="text" id="url-input" placeholder="example.com or https://example.com" autocomplete="url" autofocus />
+    <button type="submit" id="audit-btn">Audit page</button>
+  </form>
+
+  <div class="state" id="state"></div>
+</main>
+
+<footer>
+  Built for <a href="https://digitalheroesco.com" target="_blank" rel="noopener">Digital Heroes</a> Training Task
+</footer>
+
+<script>
+  const form = document.getElementById('audit-form');
+  const input = document.getElementById('url-input');
+  const btn = document.getElementById('audit-btn');
+  const state = document.getElementById('state');
+
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const url = input.value.trim();
+    if (!url) return;
+
+    btn.disabled = true;
+    state.innerHTML = '<div class="loading"><span class="spinner"></span>Fetching and analyzing the page…</div>';
+
+    try {
+      const res = await fetch('/api/audit?url=' + encodeURIComponent(url));
+      const data = await res.json();
+      if (!res.ok) {
+        state.innerHTML = '<div class="error">' + esc(data.error?.message || 'Something went wrong.') + '</div>';
+        return;
+      }
+      render(data);
+    } catch {
+      state.innerHTML = '<div class="error">Could not reach the audit server. Is it running?</div>';
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  function statusClass(code) {
+    if (code >= 200 && code < 300) return 'good';
+    if (code >= 300 && code < 400) return 'warn';
+    return 'bad';
+  }
+
+  function speedHint(ms) {
+    if (ms < 500) return ['good', 'Fast'];
+    if (ms < 1500) return ['warn', 'Okay — could be faster'];
+    return ['bad', 'Slow'];
+  }
+
+  function render(d) {
+    const [speedCls, speedTxt] = speedHint(d.responseTimeMs);
+    const h1Hint = d.h1Count === 1
+      ? ['good', 'Perfect — exactly one H1']
+      : d.h1Count === 0
+        ? ['bad', 'No H1 found']
+        : ['warn', 'More than one H1'];
+    const altHint = d.imagesMissingAlt === 0
+      ? ['good', 'All images have alt text']
+      : ['bad', d.imagesMissingAlt + ' of ' + d.imageCount + ' images missing alt text'];
+
+    state.innerHTML = `
+      <div class="report-head">
+        <span class="pill ${statusClass(d.httpStatus)}">HTTP ${esc(d.httpStatus)}</span>
+        <span class="report-url">${esc(d.url)}</span>
+      </div>
+      <div class="grid">
+        <div class="card">
+          <div class="label">Response time</div>
+          <div class="value">${esc(d.responseTimeMs)} ms</div>
+          <div class="hint ${speedCls}">${speedTxt}</div>
+        </div>
+        <div class="card">
+          <div class="label">H1 headings</div>
+          <div class="value">${esc(d.h1Count)}</div>
+          <div class="hint ${h1Hint[0]}">${h1Hint[1]}</div>
+        </div>
+        <div class="card">
+          <div class="label">Images missing alt</div>
+          <div class="value">${esc(d.imagesMissingAlt)} / ${esc(d.imageCount)}</div>
+          <div class="hint ${altHint[0]}">${altHint[1]}</div>
+        </div>
+        <div class="card">
+          <div class="label">Word count</div>
+          <div class="value">${esc(d.wordCount)}</div>
+          <div class="hint ${d.wordCount >= 300 ? 'good' : 'warn'}">${d.wordCount >= 300 ? 'Healthy amount of content' : 'Thin content'}</div>
+        </div>
+        <div class="card wide">
+          <div class="label">Page title</div>
+          <div class="value small">${d.title ? esc(d.title) : '<span class="missing">Missing</span>'}</div>
+        </div>
+        <div class="card wide">
+          <div class="label">Meta description</div>
+          <div class="value small">${d.metaDescription ? esc(d.metaDescription) : '<span class="missing">Missing</span>'}</div>
+        </div>
+      </div>`;
+  }
+</script>
+</body>
+</html>
