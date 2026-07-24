@@ -6,7 +6,9 @@ Built for the **Digital Heroes** SDE internship task (Task A + Task B).
 
 ## Live demo
 
-> **https://YOUR-DEPLOY-URL-HERE** ← replace after deploying (see [Deployment](#deployment))
+> **https://digital-heroes-718u.onrender.com**
+>
+> (Free-tier hosting sleeps when idle — the first visit may take ~30 seconds to wake up.)
 
 ## Tech stack
 
