@@ -99,16 +99,6 @@ The server never crashes on bad input — every failure path returns a structure
 - Follow-up checks: canonical tag, Open Graph tags, and a broken-link sample.
 - A tiny in-memory LRU cache so repeated audits of the same URL within a minute don't re-fetch.
 
-## Deployment
-
-Works on any free Node host. For **Render** (recommended, zero config):
-
-1. Push this repo to GitHub.
-2. On [render.com](https://render.com): **New → Web Service → connect the repo**.
-3. Build command: `npm install` · Start command: `npm start`. Done.
-
-Also works as-is on Railway, Fly.io, or Replit — the server binds to `process.env.PORT`.
-
 ## AI usage note
 
 I used Claude to scaffold the Express boilerplate and the CSS for the report cards, then reviewed and reworked the output: I separated the parsing logic into a pure module so it could be tested without mocks, added the streamed size cap and private-address block after thinking through how the endpoint could be abused, and rewrote the error contract so every failure returns the same `{ error: { code, message } }` shape.
